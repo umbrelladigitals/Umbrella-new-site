@@ -1,0 +1,180 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id       Int    @id @default(autoincrement())
+  username String @unique
+  password String
+}
+
+model Project {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  image       String
+  year        String
+  client      String
+  gallery     String   // JSON array of strings
+  
+  // English Content
+  titleEn     String
+  categoryEn  String
+  tagsEn      String   // JSON array
+  roleEn      String
+  descEn      String
+  challengeEn String
+  solutionEn  String
+  resultsEn   String   // JSON array of objects
+
+  // Turkish Content
+  titleTr     String
+  categoryTr  String
+  tagsTr      String   // JSON array
+  roleTr      String
+  descTr      String
+  challengeTr String
+  solutionTr  String
+  resultsTr   String   // JSON array of objects
+  
+  published   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Service {
+  id          String   @id
+  video       String?
+  
+  // English Content
+  titleEn     String
+  shortDescEn String
+  descEn      String
+  challengeEn String
+  solutionEn  String
+  deliverablesEn String // JSON array
+  tagsEn      String    // JSON array
+
+  // Turkish Content
+  titleTr     String
+  shortDescTr String
+  descTr      String
+  challengeTr String
+  solutionTr  String
+  deliverablesTr String // JSON array
+  tagsTr      String    // JSON array
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String?
+  email     String?
+  subject   String?
+  summary   String
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique
+  image       String
+  
+  // English Content
+  titleEn     String
+  summaryEn   String
+  contentEn   String   // Markdown
+  tagsEn      String   // JSON array
+
+  // Turkish Content
+  titleTr     String
+  summaryTr   String
+  contentTr   String   // Markdown
+  tagsTr      String   // JSON array
+
+  published   Boolean  @default(true)
+  featured    Boolean  @default(false)
+  author      String   @default("Umbrella Digital")
+  readTime    Int      @default(5)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  company   String?
+  notes     String?
+  
+  proposals Proposal[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Proposal {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  clientName  String
+  clientEmail String?
+  projectTitle String
+  
+  customerId  String?
+  customer    Customer? @relation(fields: [customerId], references: [id])
+  
+  // AI Generated Content stored as JSON string
+  // { 
+  //   vision: string, 
+  //   scope: { title: string, description: string, price: number }[], 
+  //   timeline: { phase: string, duration: string, description: string }[], 
+  //   totalPrice: number,
+  //   currency: string
+  // }
+  content     String   
+  
+  status      String   @default("DRAFT") // DRAFT, PUBLISHED, ACCEPTED, REJECTED
+  viewCount   Int      @default(0)
+  
+  tracker     ProjectTracker?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model ProjectTracker {
+  id          String   @id @default(cuid())
+  proposalId  String   @unique
+  proposal    Proposal @relation(fields: [proposalId], references: [id], onDelete: Cascade)
+  slug        String   @unique
+  
+  status      String   @default("ACTIVE") // ACTIVE, COMPLETED, PAUSED
+  progress    Int      @default(0)
+  
+  // JSON: { phase: string, status: 'PENDING'|'IN_PROGRESS'|'COMPLETED', date: string }[]
+  phases      String   
+  
+  // JSON: { date: string, title: string, content: string, type: 'MILESTONE'|'UPDATE'|'ALERT' }[]
+  updates     String   @default("[]")
+
+  // JSON: { name: string, url: string, type: string, size: string, date: string }[]
+  files       String   @default("[]")
+  
+  vaultPassword String? // Optional password for the vault
+  language      String   @default("EN") // EN, TR
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
